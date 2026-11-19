@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; connect-src 'self' https://*.apigw.yandexcloud.net https://*.functions.yandexcloud.net https://*.yandexcloud.net; worker-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F9F8F6" id="meta-theme-color" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#121214" id="meta-theme-color-dark" media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="НГТУ Ежедневник — офлайн-планнер студента: расписание, окна между парами и контроль дедлайнов. Проект команды «Электрон».">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="НГТУ Планнер">
+    <title>НГТУ Ежедневник • Команда «Электрон» (v0.0.7 beta)</title>
+
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+
+    <style>
+        /* УБИРАЕМ ПЛАШКИ NETLIFY, VERCEL И ЛЮБЫЕ ВСТРОЕННЫЕ ТУЛБАРЫ ХОСТИНГА */
+        #netlify-toolbar, netlify-toolbar, netlify-drawer, #vercel-toolbar, vercel-live-feedback { display: none !important; }
+
+        /* ==========================================================================
+           1. ДИЗАЙН-СИСТЕМА: МЯГКИЙ ПАСТЕЛЬНЫЙ ИНТЕРФЕЙС (SOFT UI)
+           ========================================================================== */
+        :root {
+            --bg-outer: #EAE7E1;
+            --bg-color: #F9F8F6;
+            --bg-elevated: #F1EFEA;
+            --card-bg: #FFFFFF;
+            --card-border: rgba(44, 44, 46, 0.08);
+            --text-main: #2C2C2E;
+            --text-muted: #8E8E93;
+            --accent-hero: #D8EACF;
+            --accent-hero-text: #223D19;
+            --primary-green: #2D5A3C;
+            --primary-green-soft: #E6F0E9;
+            --danger: #FF6B6B;
+            --danger-soft: #FFE5E5;
+            --warning: #FF9F43;
+            --warning-soft: #FFF2E2;
+            --success: #2D5A3C;
+            --info: #4A90E2;
+            --info-soft: #EBF3FC;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+            --radius-card: 18px;
+            --radius-btn: 16px;
+        }
+
+        body.dark-theme {
+            --bg-outer: #0A0A0C;
+            --bg-color: #121214;
+            --bg-elevated: #1A1A1E;
+            --card-bg: #242429;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ECECF1;
+            --text-muted: #9898A2;
+            --accent-hero: #203524;
+            --accent-hero-text: #C4E8B8;
+            --primary-green: #3E7B52;
+            --primary-green-soft: rgba(62, 123, 82, 0.22);
+            --danger: #FF6B6B;
+            --danger-soft: rgba(255, 107, 107, 0.18);
+            --warning: #FF9F43;
+            --warning-soft: rgba(255, 159, 67, 0.18);
+            --info-soft: rgba(74, 144, 226, 0.18);
+            --shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        body {
+            background-color: var(--bg-outer);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overscroll-behavior-y: contain;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background-color: var(--bg-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
+            padding-bottom: 92px;
+            overflow-x: hidden;
+        }
+
+        /* Видимый фокус для доступности с клавиатуры */
+        :focus-visible {
+            outline: 2px solid var(--primary-green);
+            outline-offset: 2px;
+        }
+
+        /* Сброс стилей для интерактивных элементов, оформленных как карточки */
+        button.day-btn, button.diff-block, button.star-btn {
+            font: inherit;
+            color: inherit;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        button.star-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        /* Шапка приложения */
+        .app-header {
+            padding: 16px 18px 12px;
+            padding-top: calc(16px + env(safe-area-inset-top));
+            background: var(--bg-color);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .user-greeting {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .user-sub {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .week-pill {
+            background: var(--accent-hero);
+            color: var(--accent-hero-text);
+            padding: 6px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            user-select: none;
+        }
+
+        /* Полоса дней недели с индикацией загруженности */
+        .week-strip {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .day-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 8px 4px 7px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .day-btn .d-name {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .day-btn .d-num {
+            font-size: 15px;
+            font-weight: 800;
+            margin-top: 2px;
+            color: var(--text-main);
+        }
+
+        .day-btn .load-bar {
+            width: 22px;
+            height: 4px;
+            border-radius: 4px;
+            margin: 5px auto 0;
+            background: #D1D1D6;
+        }
+
+        .day-btn.active {
+            background: var(--primary-green);
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(45, 90, 60, 0.25);
+        }
+
+        .day-btn.active .d-name,
+        .day-btn.active .d-num {
+            color: #FFFFFF;
+        }
+
+        /* Контент и экраны */
+        .screen {
+            display: none;
+            padding: 14px 16px 24px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 800;
+            margin: 16px 0 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Пульсирующий баннер дедлайнов */
+        .urgent-banner {
+            background: linear-gradient(135deg, #FF6B6B 0%, #EE5253 100%);
+            color: #FFFFFF;
+            border-radius: var(--radius-card);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 6px 18px rgba(255, 107, 107, 0.32);
+            animation: pulseUrgent 2s infinite;
+        }
+
+        @keyframes pulseUrgent {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.012); }
+        }
+
+        .urgent-banner h4 {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .urgent-banner p {
+            font-size: 13px;
+            opacity: 0.95;
+            line-height: 1.35;
+        }
+
+        /* Карточка Умного Наставника */
+        .mentor-card {
+            background: var(--accent-hero);
+            color: var(--accent-hero-text);
+            border-radius: var(--radius-card);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(34, 61, 25, 0.12);
+        }
+
+        .mentor-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .mentor-body {
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .mentor-tips-list {
+            margin-top: 8px;
+            padding-left: 18px;
+            font-size: 12.5px;
+        }
+
+        .mentor-tips-list li {
+            margin-bottom: 4px;
+        }
+
+        /* Карточка "Что сейчас" */
+        .now-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--primary-green);
+            border-radius: var(--radius-card);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .now-badge {
+            display: inline-block;
+            background: var(--primary-green-soft);
+            color: var(--primary-green);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 99px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-elevated);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-green);
+            border-radius: 99px;
+            transition: width 0.3s ease;
+        }
+
+        /* Статистика дня и прогресс задач */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .stat-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px;
+        }
+
+        .stat-label {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 17px;
+            font-weight: 800;
+            margin-top: 3px;
+        }
+
+        /* Расписание и окна между парами */
+        .lesson-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            padding: 13px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .lesson-time {
+            min-width: 58px;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary-green);
+            background: var(--primary-green-soft);
+            padding: 6px 8px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .lesson-info {
+            flex: 1;
+        }
+
+        .lesson-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .lesson-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--bg-elevated);
+            color: var(--text-main);
+        }
+
+        .window-gap {
+            background: var(--warning-soft);
+            color: #B36200;
+            border: 1px dashed var(--warning);
+            border-radius: 14px;
+            padding: 8px 12px;
+            margin: 6px 0 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        body.dark-theme .window-gap {
+            color: #FFB870;
+        }
+
+        /* Задачи */
+        .task-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-left: 5px solid var(--primary-green);
+            border-radius: var(--radius-card);
+            padding: 13px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .task-card.status-danger {
+            border-left-color: var(--danger);
+            background: linear-gradient(to right, var(--danger-soft), var(--card-bg) 30%);
+        }
+
+        .task-card.status-warning {
+            border-left-color: var(--warning);
+            background: linear-gradient(to right, var(--warning-soft), var(--card-bg) 30%);
+        }
+
+        .task-card.done {
+            opacity: 0.55;
+            border-left-color: #8E8E93;
+        }
+
+        .task-card.done .task-title {
+            text-decoration: line-through;
+        }
+
+        .task-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            border: 2px solid var(--primary-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+            font-size: 13px;
+            color: #FFF;
+            background: transparent;
+        }
+
+        .task-card.done .task-check {
+            background: var(--primary-green);
+        }
+
+        .task-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            overflow-wrap: anywhere;
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+
+        .badge-danger { background: var(--danger-soft); color: var(--danger); }
+        .badge-warning { background: var(--warning-soft); color: #D97706; }
+        .badge-normal { background: var(--primary-green-soft); color: var(--primary-green); }
+
+        /* Формы и кнопки */
+        .btn {
+            background: var(--primary-green);
+            color: #FFFFFF;
+            border: none;
+            border-radius: var(--radius-btn);
+            padding: 13px 18px;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .btn-sm {
+            padding: 7px 12px;
+            font-size: 12px;
+            border-radius: 11px;
+            width: auto;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        .input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 76px;
+        }
+
+        /* Выбор сложности задачи (3 блока) */
+        .diff-blocks {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .diff-block {
+            background: var(--bg-elevated);
+            border: 1.5px solid var(--card-border);
+            border-radius: 12px;
+            padding: 10px 6px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .diff-block.active {
+            border-color: var(--primary-green);
+            background: var(--primary-green-soft);
+        }
+
+        .diff-block .d-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .diff-block.active .d-title {
+            color: var(--primary-green);
+        }
+
+        .diff-block .d-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.2;
+        }
+
+        /* Фильтр-пилюли */
+        .pill-tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 12px;
+        }
+
+        .pill-tab {
+            padding: 8px 13px;
+            border-radius: 99px;
+            font-size: 12.5px;
+            font-weight: 700;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .pill-tab.active {
+            background: var(--primary-green);
+            color: #FFFFFF;
+            border-color: var(--primary-green);
+        }
+
+        /* Навигация расписания (стрелочки и текущая неделя) */
+        .schedule-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .schedule-nav-btn {
+            background: var(--bg-elevated);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            font-size: 18px;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .schedule-week-label {
+            font-size: 15px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .schedule-week-sub {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            text-transform: lowercase;
+        }
+
+        /* Список чекбоксов дисциплин */
+        .subject-toggle-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--bg-elevated);
+            border-radius: 14px;
+            padding: 8px;
+            margin-bottom: 14px;
+        }
+
+        .subject-toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .subject-toggle-item:last-child {
+            border-bottom: none;
+        }
+
+        .subject-toggle-info {
+            flex: 1;
+            min-width: 0;
+            padding-right: 10px;
+        }
+
+        .subject-toggle-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            overflow-wrap: anywhere;
+        }
+
+        .subject-toggle-meta {
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+
+        .checkbox-switch {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-green);
+            flex-shrink: 0;
+        }
+
+        .icon-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Нижняя навигация */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--card-border);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+            z-index: 30;
+        }
+
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 6px 4px;
+            border-radius: 12px;
+        }
+
+        .nav-item .nav-icon {
+            font-size: 19px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-green);
+            background: var(--primary-green-soft);
+        }
+
+        /* Плавающая кнопка FAB */
+        .fab {
+            position: fixed;
+            bottom: 78px;
+            right: max(18px, calc(50% - 222px));
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-green);
+            color: #FFFFFF;
+            border: none;
+            font-size: 28px;
+            font-weight: 400;
+            box-shadow: 0 8px 22px rgba(45, 90, 60, 0.38);
+            cursor: pointer;
+            z-index: 35;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Модальные окна и шторки (Bottom Sheet) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.52);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-overlay.center-modal {
+            align-items: center;
+            padding: 18px;
+        }
+
+        .modal-overlay.center-modal .bottom-sheet {
+            border-radius: 24px;
+            max-width: 440px;
+            max-height: 85vh;
+            animation: popCenter 0.2s ease;
+        }
+
+        @keyframes popCenter {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .star-rating {
+            display: inline-flex;
+            gap: 6px;
+            font-size: 26px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .star-btn {
+            color: #D1D1D6;
+            transition: transform 0.12s ease, color 0.12s ease;
+        }
+
+        .star-btn.active {
+            color: #FF9F43;
+        }
+
+        .star-btn:active {
+            transform: scale(1.18);
+        }
+
+        .bottom-sheet {
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: var(--card-bg);
+            border-radius: 24px 24px 0 0;
+            padding: 20px 18px calc(28px + env(safe-area-inset-bottom));
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.22s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .sheet-title {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .close-btn {
+            background: var(--bg-elevated);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            color: var(--text-main);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Экран приветствия (Welcome) */
+        .welcome-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            z-index: 200;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .welcome-overlay.open {
+            display: flex;
+        }
+
+        .welcome-box {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px 20px;
+            box-shadow: var(--shadow-lg);
+            margin: auto;
+        }
+
+        /* Всплывающий тост для уведомлений */
+        .toast-container {
+            position: fixed;
+            top: calc(14px + env(safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 28px);
+            max-width: 450px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #1E1E24;
+            color: #FFFFFF;
+            padding: 13px 16px;
+            border-radius: 16px;
+            box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+            font-size: 13px;
+            line-height: 1.4;
+            pointer-events: auto;
+            border-left: 4px solid var(--info);
+            animation: fadeIn 0.25s ease;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.toast--success { border-left-color: #4CC46A; }
+        .toast.toast--warn { border-left-color: var(--warning); }
+        .toast.toast--error { border-left-color: var(--danger); }
+
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-green-soft);
+            color: var(--primary-green);
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .disclaimer-box {
+            background: var(--bg-color);
+            border: 1px dashed var(--card-border);
+            border-radius: 14px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 1.48;
+            color: var(--text-muted);
+        }
+
+        /* Уважаем настройку «уменьшить движение» — экономит батарею на слабых устройствах */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
+
+<!-- ЭКРАН 0: РЕГИСТРАЦИЯ (WELCOME) -->
+<div class="welcome-overlay" id="welcome-modal">
+    <div class="welcome-box">
+        <div style="margin-bottom: 10px;"><img id="welcome-app-logo" src="./icon-192.png" alt="НГТУ Планнер" width="56" height="56" style="width: 56px; height: 56px; border-radius: 14px; box-shadow: var(--shadow);"></div>
+        <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px;">НГТУ Ежедневник</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">
+            Умный помощник студента от команды <b>«Электрон»</b>. Расписание, окна между парами и многоступенчатый контроль дедлайнов.
+        </p>
+
+        <div class="input-group">
+            <label for="reg-name">Твоё имя</label>
+            <input type="text" id="reg-name" class="input" placeholder="Например, Алексей" maxlength="40" autocomplete="given-name">
+        </div>
+
+        <div class="input-group">
+            <label for="reg-faculty">Факультет</label>
+            <select id="reg-faculty" class="input" onchange="updateGroupSelect('reg-faculty', 'reg-group')">
+                <option value="" disabled selected>Выберите факультет...</option>
+                <option value="МТФ">МТФ (Механико-технологический)</option>
+                <option value="ФБ">ФБ (Факультет бизнеса)</option>
+                <option value="ФЛА">ФЛА (Летательных аппаратов)</option>
+            </select>
+        </div>
+
+        <div class="input-group" id="reg-group-wrapper" style="display: none;">
+            <label for="reg-group">Учебная группа</label>
+            <select id="reg-group" class="input"></select>
+        </div>
+
+        <div class="input-group">
+            <label for="reg-subgroup">Подгруппа (для лабораторных)</label>
+            <select id="reg-subgroup" class="input">
+                <option value="0">Без подгруппы (показывать все)</option>
+                <option value="1">1 подгруппа</option>
+                <option value="2">2 подгруппа</option>
+                <option value="3">3 подгруппа</option>
+            </select>
+        </div>
+
+        <button class="btn" onclick="completeRegistration()">Начать работу 🚀</button>
+    </div>
+</div>
+
+<!-- ОСНОВНОЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ -->
+<div class="app-shell">
+    <!-- ШАПКА -->
+    <header class="app-header">
+        <div class="header-top">
+            <div>
+                <div class="user-greeting" id="header-greeting">Привет, Студент!</div>
+                <div class="user-sub">
+                    <span id="header-group-badge">МТФ • ЦТК-126</span>
+                    <span aria-hidden="true">•</span>
+                    <span id="header-date-str">Ноябрь</span>
+                </div>
+            </div>
+            <div class="week-pill" id="auto-week-pill" title="Определяется автоматически по календарю НГТУ">
+                📅 10 нед. • Чётная
+            </div>
+        </div>
+        <div class="week-strip" id="week-strip"></div>
+    </header>
+
+    <!-- ЭКРАН 1: ОБЗОР (ГЛАВНЫЙ) -->
+    <main class="screen active" id="screen-overview">
+        <div id="urgent-banner-container"></div>
+        <div id="mentor-container"></div>
+        <div id="now-card-container"></div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-label">Выполнено задач</div>
+                <div class="stat-value" id="stat-tasks-percent">0%</div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="stat-tasks-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Загруженность дня</div>
+                <div class="stat-value" id="stat-day-load">Низкая</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="stat-day-load-sub">Пары + дедлайны</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span id="overview-schedule-title">📚 Пары на выбранный день</span>
+            <button class="btn btn-secondary btn-sm" onclick="openScheduleEditorModal()">⚙️ Править</button>
+        </div>
+        <div id="overview-schedule-list"></div>
+
+        <div class="section-title">
+            <span>🎯 Дедлайны и задачи дня</span>
+        </div>
+        <div id="overview-tasks-list"></div>
+    </main>
+
+    <!-- ЭКРАН 2: РАСПИСАНИЕ (ВСЕ ДНИ) -->
+    <section class="screen" id="screen-schedule">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="font-size: 19px; font-weight: 800;">Расписание</h2>
+            <button class="btn btn-secondary btn-sm" onclick="openScheduleEditorModal()">+ Своя пара / Скрыть</button>
+        </div>
+
+        <!-- Навигация по неделям -->
+        <div class="schedule-nav">
+            <button class="schedule-nav-btn" onclick="changeScheduleWeek(-1)" aria-label="Предыдущая неделя">←</button>
+            <div>
+                <div class="schedule-week-label" id="schedule-week-title">Текущая неделя</div>
+                <div class="schedule-week-sub" id="schedule-week-parity">10 неделя (Чётная)</div>
+            </div>
+            <button class="schedule-nav-btn" onclick="changeScheduleWeek(1)" aria-label="Следующая неделя">→</button>
+        </div>
+
+        <div id="full-schedule-container"></div>
+    </section>
+
+    <!-- ЭКРАН 3: ЗАДАЧИ -->
+    <section class="screen" id="screen-tasks">
+        <h2 style="font-size: 19px; font-weight: 800; margin-bottom: 12px;">Все задачи и дедлайны</h2>
+
+        <!-- Статус бар прогресса -->
+        <div class="card" style="margin-bottom: 14px; padding: 12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <strong style="font-size:14px;">Прогресс выполнения</strong>
+                <strong style="font-size:14px; color:var(--primary-green);" id="tasks-screen-percent-text">0%</strong>
+            </div>
+            <div class="progress-track" style="margin-top: 0;">
+                <div class="progress-fill" id="tasks-screen-bar" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div id="all-tasks-container"></div>
+    </section>
+
+    <!-- ЭКРАН 4: ПРОФИЛЬ -->
+    <section class="screen" id="screen-profile">
+        <!-- Карточка студента -->
+        <div class="card" style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--primary-green); color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; flex-shrink: 0;" id="profile-avatar">С</div>
+                <div style="min-width: 0;">
+                    <div style="font-size: 17px; font-weight: 800; overflow-wrap: anywhere;" id="profile-name">Студент</div>
+                    <div style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;" id="profile-group-info">ЦТК-126 • Без подгруппы</div>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="openProfileEditModal()">Изменить</button>
+        </div>
+
+        <!-- Управление темой, расписанием и установкой -->
+        <div class="card" style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn btn-secondary" onclick="toggleTheme()">
+                🌗 Переключить тему (Светлая / Тёмная)
+            </button>
+            <button class="btn btn-secondary" onclick="openScheduleEditorModal()">
+                ✏️ Корректировка расписания (Скрыть / Добавить)
+            </button>
+            <button class="btn" onclick="openInstallModal()">
+                📲 Установка на телефон и настройка уведомлений
+            </button>
+            <button class="btn btn-secondary" onclick="requestAndTestNotifications()">
+                🔔 Проверить уведомления сейчас
+            </button>
+            <button class="btn btn-secondary" onclick="openAboutModal()">
+                ⚡ О приложении (Версия и Разработчики)
+            </button>
+            <button class="btn btn-secondary" onclick="openFeedbackModal()">
+                📬 Книга отзывов и предложений
+            </button>
+        </div>
+    </section>
+
+    <!-- ПЛАВАЮЩАЯ КНОПКА "+" -->
+    <button class="fab" id="main-fab" onclick="openTaskModal()" title="Добавить задачу" aria-label="Добавить задачу">+</button>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchScreen('overview', this)">
+            <span class="nav-icon" aria-hidden="true">🏠</span>
+            <span>Обзор</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('schedule', this)">
+            <span class="nav-icon" aria-hidden="true">📅</span>
+            <span>Расписание</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('tasks', this)">
+            <span class="nav-icon" aria-hidden="true">✅</span>
+            <span>Задачи</span>
+        </button>
+        <button class="nav-item" onclick="switchScreen('profile', this)">
+            <span class="nav-icon" aria-hidden="true">👤</span>
+            <span>Профиль</span>
+        </button>
+    </nav>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: ДОБАВЛЕНИЕ ЗАДАЧИ (С БЛОКАМИ СЛОЖНОСТИ) -->
+<div class="modal-overlay" id="task-modal">
+    <div class="bottom-sheet">
+        <div class="sheet-header">
+            <div class="sheet-title">Новая задача</div>
+            <button class="close-btn" onclick="closeModal('task-modal')" aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="input-group">
+            <label for="task-title-input">Что нужно сделать?</label>
+            <input type="text" id="task-title-input" class="input" placeholder="Например: Сдать РГЗ №2 или Лаба №3" maxlength="120">
+        </div>
+
+        <div class="input-group">
+            <label for="task-subject-input">Привязка к дисциплине</label>
+            <select id="task-subject-input" class="input"></select>
+        </div>
+
+        <div class="input-group">
+            <label for="task-date-input">Дата дедлайна (сдачи)</label>
+            <input type="date" id="task-date-input" class="input">
+        </div>
+
+        <div class="input-group">
+            <label>Степень трудности</label>
+            <div class="diff-blocks">
+                <button type="button" class="diff-block" id="diff-easy" onclick="selectDraftDifficulty('easy')">
+                    <div class="d-title">🟢 Лёгкая</div>
+                    <div class="d-desc">До 30 мин<br>Напомним за 2 и 1 дн.</div>
+                </button>
+                <button type="button" class="diff-block active" id="diff-medium" onclick="selectDraftDifficulty('medium')">
+                    <div class="d-title">🟠 Средняя</div>
+                    <div class="d-desc">1–2 часа<br>Напомним за 7, 3, 1 дн.</div>
+                </button>
+                <button type="button" class="diff-block" id="diff-hard" onclick="selectDraftDifficulty('hard')">
+                    <div class="d-title">🔴 Трудная</div>
+                    <div class="d-desc">Проект / РГЗ<br>Напомним за 14, 7, 3, 1 дн.</div>
+                </button>
+            </div>
+        </div>
+
+        <button class="btn" style="margin-top: 8px;" onclick="saveNewTask()">Сохранить задачу</button>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ ПРОФИЛЯ -->
+<div class="modal-overlay" id="profile-edit-modal">
+    <div class="bottom-sheet">
+        <div class="sheet-header">
+            <div class="sheet-title">Настройки профиля</div>
+            <button class="close-btn" onclick="closeModal('profile-edit-modal')" aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="input-group">
+            <label for="edit-name">Имя пользователя</label>
+            <input type="text" id="edit-name" class="input" maxlength="40">
+        </div>
+
+        <div class="input-group">
+            <label for="edit-faculty">Факультет</label>
+            <select id="edit-faculty" class="input" onchange="updateGroupSelect('edit-faculty', 'edit-group')">
+                <option value="МТФ">МТФ</option>
+                <option value="ФБ">ФБ</option>
+                <option value="ФЛА">ФЛА</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="edit-group">Группа</label>
+            <select id="edit-group" class="input"></select>
+        </div>
+
+        <div class="input-group">
+            <label for="edit-subgroup">Подгруппа (для лабораторных)</label>
+            <select id="edit-subgroup" class="input">
+                <option value="0">Без подгруппы</option>
+                <option value="1">1 подгруппа</option>
+                <option value="2">2 подгруппа</option>
+                <option value="3">3 подгруппа</option>
+            </select>
+        </div>
+
+        <button class="btn" onclick="saveProfileEdit()">Сохранить изменения</button>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: КНИГА ОТЗЫВОВ И ПРЕДЛОЖЕНИЙ (ПО ЦЕНТРУ) -->
+<div class="modal-overlay center-modal" id="feedback-modal">
+    <div class="bottom-sheet">
+        <div class="sheet-header">
+            <div class="sheet-title">📬 Книга отзывов и предложений</div>
+            <button class="close-btn" onclick="closeModal('feedback-modal')" aria-label="Закрыть">✕</button>
+        </div>
+
+        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px;">
+            Нашли ошибку или есть идея для улучшения? Оставьте запись — это поможет команде «Электрон» сделать приложение лучше!
+        </p>
+
+        <div class="input-group">
+            <label>Оценка приложения</label>
+            <div class="star-rating" id="fb-star-rating">
+                <button type="button" class="star-btn active" onclick="setFeedbackRating(1)" aria-label="1 звезда">★</button>
+                <button type="button" class="star-btn active" onclick="setFeedbackRating(2)" aria-label="2 звезды">★</button>
+                <button type="button" class="star-btn active" onclick="setFeedbackRating(3)" aria-label="3 звезды">★</button>
+                <button type="button" class="star-btn active" onclick="setFeedbackRating(4)" aria-label="4 звезды">★</button>
+                <button type="button" class="star-btn active" onclick="setFeedbackRating(5)" aria-label="5 звёзд">★</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="fb-type">Категория обращения</label>
+            <select id="fb-type" class="input">
+                <option value="bug">🐛 Сообщить об ошибке (Баг / Сбой)</option>
+                <option value="idea">💡 Предложение / Идея по улучшению</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="fb-text">Описание</label>
+            <textarea id="fb-text" placeholder="Опишите ошибку или вашу идею..." maxlength="1000"></textarea>
+        </div>
+        <button class="btn" onclick="submitFeedback()">Отправить в книгу отзывов</button>
+
+        <hr style="border: none; border-top: 1px solid var(--card-border); margin: 16px 0 12px;">
+
+        <!-- Фильтр отзывов: Все / Ошибки / Предложения -->
+        <div class="pill-tabs" id="feedback-filter-tabs">
+            <button class="pill-tab active" data-filter="all" onclick="setFeedbackFilter('all', this)">Все записи</button>
+            <button class="pill-tab" data-filter="bug" onclick="setFeedbackFilter('bug', this)">🐛 Ошибки</button>
+            <button class="pill-tab" data-filter="idea" onclick="setFeedbackFilter('idea', this)">💡 Предложения</button>
+        </div>
+
+        <div id="feedback-list-container"></div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: О ПРИЛОЖЕНИИ (ПО ЦЕНТРУ) -->
+<div class="modal-overlay center-modal" id="about-modal">
+    <div class="bottom-sheet">
+        <div class="sheet-header">
+            <div class="sheet-title">⚡ О приложении</div>
+            <button class="close-btn" onclick="closeModal('about-modal')" aria-label="Закрыть">✕</button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span class="version-badge">Версия 0.0.7 beta (прототип)</span>
+        </div>
+        <div style="font-size: 14.5px; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">
+            Разработано командой «Электрон»
+        </div>
+
+        <div class="disclaimer-box" style="margin-top:0;">
+            <p style="margin-bottom: 10px;">
+                <b>ℹ️ Важное примечание:</b> Данное приложение <b>не является официальным приложением НГТУ</b>. Это локальный пользовательский проект, созданный инициативной группой студентов (не коммерческой организацией). Ежедневник создан как умный личный помощник студента для развития навыков тайм-менеджмента, планирования учебной нагрузки и контроля дедлайнов.
+            </p>
+            <p>
+                <b>⚠️ Статус разработки:</b> Проект находится на стадии бета-тестирования. Возможны сбои, опечатки или некорректная работа некоторых функций. Просим сообщать о любых найденных ошибках и ваших идеях через раздел <b>«Книга отзывов»</b> в профиле!
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: КОРРЕКТИРОВКА РАСПИСАНИЯ -->
+<div class="modal-overlay" id="schedule-editor-modal">
+    <div class="bottom-sheet">
+        <div class="sheet-header">
+            <div class="sheet-title">Настройка расписания</div>
+            <button class="close-btn" onclick="closeModal('schedule-editor-modal')" aria-label="Закрыть">✕</button>
+        </div>
+
+        <!-- Управление отображением базовых дисциплин -->
+        <div style="font-size: 14px; font-weight: 800; margin-bottom: 8px;">✅ Включить / Отключить дисциплины</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+            Снимите галочку, если пара отменена или этот предмет у вас не ведётся, чтобы он больше не отображался в расписании.
+        </p>
+        <div class="subject-toggle-list" id="subject-toggle-list"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-bottom: 8px;" onclick="restoreAllHiddenLessons()">↺ Показать все скрытые пары</button>
+
+        <hr style="border: none; border-top: 1px dashed var(--card-border); margin: 16px 0;">
+
+        <!-- Добавление своей дисциплины -->
+        <div style="font-size: 14px; font-weight: 800; margin-bottom: 12px;">➕ Добавить свою пару или секцию</div>
+        <div class="input-group">
+            <label for="cust-title">Название дисциплины / секции</label>
+            <input type="text" id="cust-title" class="input" placeholder="Например: Волейбол / Английский" maxlength="80">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="input-group">
+                <label for="cust-day">День недели</label>
+                <select id="cust-day" class="input">
+                    <option value="1">Понедельник</option>
+                    <option value="2">Вторник</option>
+                    <option value="3">Среда</option>
+                    <option value="4">Четверг</option>
+                    <option value="5">Пятница</option>
+                    <option value="6">Суббота</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="cust-time">Время начала</label>
+                <select id="cust-time" class="input">
+                    <option value="08:30">08:30</option>
+                    <option value="10:15">10:15</option>
+                    <option value="12:00">12:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:45">15:45</option>
+                    <option value="17:30">17:30</option>
+                    <option value="19:00">19:00</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="input-group">
+                <label for="cust-type">Тип занятия</label>
+                <select id="cust-type" class="input">
+                    <option value="Секция">Секция / Кружок</option>
+                    <option value="Пр">Практика (Пр)</option>
+                    <option value="Л">Лекция (Л)</option>
+                    <option value="Лаб">Лабораторная (Лаб)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="cust-room">Аудитория</label>
+                <input type="text" id="cust-room" class="input" placeholder="Спортзал / 5-210" maxlength="40">
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="cust-parity">По каким неделям?</label>
+            <select id="cust-parity" class="input">
+                <option value="both">Каждую неделю</option>
+                <option value="even">Только чётные</option>
+                <option value="odd">Только нечётные</option>
+            </select>
+        </div>
+        <button class="btn" onclick="addCustomLesson()">Добавить в расписание</button>
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: ИНСТРУКЦИЯ ПО УСТАНОВКЕ И УВЕДОМЛЕНИЯМ -->
+<div class="modal-overlay" id="install-modal">
+    <div class="bottom-sheet">
+        <div class="sheet-header">
+            <div class="sheet-title">Установка и уведомления 📲</div>
+            <button class="close-btn" onclick="closeModal('install-modal')" aria-label="Закрыть">✕</button>
+        </div>
+
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Установите ежедневник на главный экран — он будет открываться <b>без интернета</b> и напоминать о дедлайнах.
+        </p>
+
+        <div class="pill-tabs">
+            <button class="pill-tab active" id="tab-btn-android" onclick="switchInstallGuideTab('android')">🤖 Android</button>
+            <button class="pill-tab" id="tab-btn-ios" onclick="switchInstallGuideTab('ios')">🍏 iPhone</button>
+            <button class="pill-tab" id="tab-btn-push" onclick="switchInstallGuideTab('push')">🔔 Уведомления</button>
+        </div>
+
+        <div id="guide-android">
+            <div class="card" style="background: var(--bg-elevated);">
+                <ol style="padding-left: 18px; font-size: 13px; line-height: 1.55; margin:0;">
+                    <li>Откройте сайт в <b>Google Chrome</b> или <b>Яндексе</b>.</li>
+                    <li>Нажмите на иконку <b>«⋮» (Три точки)</b> вверху браузера.</li>
+                    <li>Выберите <b>«Установить приложение»</b> или <b>«Добавить на главный экран»</b>.</li>
+                    <li>Подтвердите установку — на рабочем столе появится иконка без адресной строки!</li>
+                </ol>
+            </div>
+        </div>
+
+        <div id="guide-ios" style="display: none;">
+            <div class="card" style="background: var(--bg-elevated);">
+                <ol style="padding-left: 18px; font-size: 13px; line-height: 1.55; margin:0;">
+                    <li>Откройте сайт строго в стандартном браузере <b>Safari</b>.</li>
+                    <li>Нажмите кнопку <b>«Поделиться»</b> (квадрат со стрелкой ⬆️ внизу экрана).</li>
+                    <li>Пролистайте список и выберите <b>«На экран „Домой“»</b>.</li>
+                    <li>Нажмите <b>«Добавить»</b> в правом верхнем углу.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div id="guide-push" style="display: none;">
+            <div class="card" style="background: var(--bg-elevated); font-size: 12.5px; line-height: 1.5;">
+                <p style="margin-bottom: 8px;">
+                    <b>1. Android (Chrome):</b><br>
+                    Нажмите «Разрешить и проверить уведомления» ниже. Если окна нет: значок замка слева от адреса → <b>Разрешения</b> → <b>Уведомления: Разрешить</b>. В настройках батареи разрешите фоновую работу для Chrome.
+                </p>
+                <p style="margin-bottom: 8px;">
+                    <b>2. Xiaomi, Realme, OnePlus:</b><br>
+                    Настройки → Приложения → Chrome (или ярлык Планнера). Включите <b>«Автозапуск»</b>, режим батареи — <i>«Нет ограничений»</i>.
+                </p>
+                <p style="margin-bottom: 8px;">
+                    <b>3. Samsung:</b><br>
+                    Настройки → Приложения → Chrome → Уведомления (разрешить всё). Батарея → убрать браузер из спящих.
+                </p>
+                <p>
+                    <b>4. iPhone (iOS 16.4+):</b><br>
+                    Уведомления работают <b>только с рабочего стола</b>. Откройте приложение с иконки и нажмите кнопку ниже, чтобы разрешить системные уведомления.
+                </p>
+            </div>
+        </div>
+
+        <button class="btn" onclick="requestAndTestNotifications()">🔔 Разрешить и проверить уведомления</button>
+    </div>
+</div>
+
+<script>
+/* ==========================================================================
+   1.1 КОНФИГУРАЦИЯ СЕРВЕРНОЙ ЧАСТИ
+   --------------------------------------------------------------------------
+   Если сайт и API (папка api/) лежат на ОДНОМ домене — оставьте "./api".
+   Если API вынесен на другой домен (например, сайт на Cloudflare Pages,
+   а функции — на Vercel/Яндекс.Облаке), укажите полный адрес, например:
+       const API_BASE = "https://your-api.example.com/api";
+   ========================================================================== */
+const API_BASE = "./api";
+
+/* ==========================================================================
+   2. БАЗА ДАННЫХ РАСПИСАНИЯ И ФАКУЛЬТЕТОВ НГТУ
+   ========================================================================== */
+const FACULTY_GROUPS = {
+    "МТФ": ["ЦТК-126"],
+    "ФБ": ["ФБИ-61"],
+    "ФЛА": ["СД-61"]
+};
+
+const SCHEDULE_DB = {
+    "ЦТК-126": {
+        faculty: "МТФ",
+        days: {
+            1: [
+                { id: "ctk_1_1", time: "10:15", end: "11:40", subject: "Химия", type: "Л", room: "5-6", parity: "both", subgroup: 0 },
+                { id: "ctk_1_2", time: "12:00", end: "13:25", subject: "Линейная алгебра", type: "Л", room: "5-6", parity: "both", subgroup: 0 },
+                { id: "ctk_1_3", time: "14:00", end: "15:25", subject: "Физическая культура", type: "Пр", room: "Лыжная база", parity: "both", subgroup: 0 }
+            ],
+            2: [
+                { id: "ctk_2_1", time: "12:00", end: "13:25", subject: "Химия", type: "Лаб", room: "1-401", parity: "odd", subgroup: 1 },
+                { id: "ctk_2_2", time: "14:00", end: "15:25", subject: "Основы российской государственности", type: "Пр", room: "8-704", parity: "both", subgroup: 0 },
+                { id: "ctk_2_3", time: "15:45", end: "17:10", subject: "Математический анализ", type: "Пр", room: "4-505", parity: "both", subgroup: 0 }
+            ],
+            3: [
+                { id: "ctk_3_1", time: "08:30", end: "09:55", subject: "Основы российской государственности", type: "Л", room: "4-508", parity: "both", subgroup: 0 },
+                { id: "ctk_3_2", time: "10:15", end: "11:40", subject: "Информационные технологии", type: "Л", room: "5-6", parity: "odd", subgroup: 0 },
+                { id: "ctk_3_3", time: "10:15", end: "11:40", subject: "Основы лингв. и комм. культуры", type: "Л", room: "5-6", parity: "even", subgroup: 0 },
+                { id: "ctk_3_4", time: "12:00", end: "13:25", subject: "Математический анализ", type: "Л", room: "5-6", parity: "both", subgroup: 0 },
+                { id: "ctk_3_5", time: "14:00", end: "15:25", subject: "Физическая культура", type: "Пр", room: "Спорткомплекс", parity: "both", subgroup: 0 }
+            ],
+            4: [
+                { id: "ctk_4_1", time: "10:15", end: "15:25", subject: "Проектная деятельность", type: "Пр", room: "Коворкинг НГТУ", parity: "both", subgroup: 0 }
+            ],
+            5: [
+                { id: "ctk_5_1", time: "12:00", end: "13:25", subject: "Основы лингв. и комм. культуры", type: "Пр", room: "4-304", parity: "both", subgroup: 0 },
+                { id: "ctk_5_2", time: "14:00", end: "15:25", subject: "Математический анализ", type: "Пр", room: "4-508", parity: "both", subgroup: 0 },
+                { id: "ctk_5_3", time: "15:45", end: "17:10", subject: "ИТ и основы программирования", type: "Лаб", room: "5-254", parity: "both", subgroup: 1 },
+                { id: "ctk_5_4", time: "17:30", end: "18:55", subject: "ИТ и основы программирования", type: "Лаб", room: "5-254", parity: "both", subgroup: 2 }
+            ],
+            6: [
+                { id: "ctk_6_1", time: "10:15", end: "11:40", subject: "Линейная алгебра", type: "Пр", room: "2-402", parity: "both", subgroup: 0 },
+                { id: "ctk_6_2", time: "12:00", end: "13:25", subject: "Математический анализ", type: "Л", room: "5-6", parity: "both", subgroup: 0 }
+            ]
+        }
+    },
+    "ФБИ-61": {
+        faculty: "ФБ",
+        days: {
+            1: [
+                { id: "fbi_1_1", time: "10:15", end: "11:40", subject: "История России", type: "Л", room: "5-7", parity: "both", subgroup: 0 },
+                { id: "fbi_1_2", time: "12:00", end: "13:25", subject: "Математический анализ", type: "Л", room: "5-7", parity: "even", subgroup: 0 },
+                { id: "fbi_1_3", time: "12:00", end: "13:25", subject: "Микроэкономика", type: "Л", room: "5-7", parity: "odd", subgroup: 0 },
+                { id: "fbi_1_4", time: "14:00", end: "15:25", subject: "Основы лингв. и комм. культуры", type: "Пр", room: "6-610", parity: "both", subgroup: 0 },
+                { id: "fbi_1_5", time: "15:45", end: "17:10", subject: "Микроэкономика", type: "Пр", room: "6-610", parity: "even", subgroup: 0 },
+                { id: "fbi_1_6", time: "15:45", end: "17:10", subject: "Математический анализ", type: "Пр", room: "6-610", parity: "odd", subgroup: 0 }
+            ],
+            2: [
+                { id: "fbi_2_1", time: "08:30", end: "09:55", subject: "Цифровое общество", type: "Пр", room: "6-705", parity: "even", subgroup: 0 },
+                { id: "fbi_2_2", time: "12:00", end: "13:25", subject: "Математический анализ", type: "Л", room: "5-7", parity: "both", subgroup: 0 }
+            ],
+            3: [
+                { id: "fbi_3_1", time: "10:15", end: "11:40", subject: "Цифровое общество", type: "Л", room: "5-7", parity: "even", subgroup: 0 },
+                { id: "fbi_3_2", time: "10:15", end: "11:40", subject: "Основы лингв. и комм. культуры", type: "Л", room: "5-7", parity: "odd", subgroup: 0 },
+                { id: "fbi_3_3", time: "12:00", end: "13:25", subject: "Линейная алгебра", type: "Пр", room: "6-603", parity: "even", subgroup: 0 }
+            ],
+            4: [
+                { id: "fbi_4_1", time: "08:30", end: "09:55", subject: "Математический анализ", type: "Пр", room: "6-702", parity: "both", subgroup: 0 },
+                { id: "fbi_4_2", time: "12:00", end: "13:25", subject: "Физическая культура", type: "Пр", room: "Лыжная база", parity: "both", subgroup: 0 }
+            ],
+            5: [
+                { id: "fbi_5_1", time: "12:00", end: "13:25", subject: "Линейная алгебра", type: "Л", room: "5-7", parity: "both", subgroup: 0 },
+                { id: "fbi_5_2", time: "14:00", end: "15:25", subject: "Введение в специальность", type: "Пр", room: "6-803", parity: "even", subgroup: 0 },
+                { id: "fbi_5_3", time: "15:45", end: "17:10", subject: "Математический анализ", type: "Пр", room: "6-805", parity: "even", subgroup: 0 }
+            ],
+            6: [
+                { id: "fbi_6_1", time: "08:30", end: "09:55", subject: "Информационные технологии", type: "Лаб", room: "6-705", parity: "even", subgroup: 1 },
+                { id: "fbi_6_2", time: "12:00", end: "13:25", subject: "Информационные технологии", type: "Л", room: "5-7", parity: "odd", subgroup: 0 }
+            ]
+        }
+    },
+    "СД-61": {
+        faculty: "ФЛА",
+        days: {
+            1: [
+                { id: "sd_1_1", time: "12:00", end: "13:25", subject: "Математический анализ", type: "Л", room: "5-5", parity: "both", subgroup: 0 },
+                { id: "sd_1_2", time: "14:00", end: "15:25", subject: "Основы лингв. и комм. культуры", type: "Пр", room: "8-504", parity: "both", subgroup: 0 },
+                { id: "sd_1_3", time: "15:45", end: "17:10", subject: "Информационные технологии", type: "Лаб", room: "3-313", parity: "both", subgroup: 1 },
+                { id: "sd_1_4", time: "17:30", end: "18:55", subject: "Информационные технологии", type: "Лаб", room: "3-313", parity: "both", subgroup: 2 }
+            ],
+            2: [
+                { id: "sd_2_1", time: "08:30", end: "09:55", subject: "Введение в специальность", type: "Л", room: "3-201", parity: "even", subgroup: 0 },
+                { id: "sd_2_2", time: "08:30", end: "09:55", subject: "Информационные технологии", type: "Л", room: "3-201", parity: "odd", subgroup: 0 },
+                { id: "sd_2_3", time: "10:15", end: "11:40", subject: "Линейная алгебра", type: "Л", room: "5-5", parity: "both", subgroup: 0 },
+                { id: "sd_2_4", time: "12:00", end: "13:25", subject: "Линейная алгебра", type: "Пр", room: "8-504", parity: "both", subgroup: 0 },
+                { id: "sd_2_5", time: "14:00", end: "15:25", subject: "Математический анализ", type: "Пр", room: "8-605", parity: "both", subgroup: 0 }
+            ],
+            3: [
+                { id: "sd_3_1", time: "10:15", end: "11:40", subject: "История России", type: "Л", room: "5-5", parity: "both", subgroup: 0 },
+                { id: "sd_3_2", time: "12:00", end: "13:25", subject: "Математический анализ", type: "Л", room: "5-5", parity: "both", subgroup: 0 },
+                { id: "sd_3_3", time: "14:00", end: "15:25", subject: "Инженерная графика", type: "Пр", room: "2-501", parity: "both", subgroup: 0 },
+                { id: "sd_3_4", time: "15:45", end: "17:10", subject: "Физическая культура", type: "Пр", room: "Спорткомплекс", parity: "both", subgroup: 0 }
+            ],
+            4: [
+                { id: "sd_4_1", time: "14:00", end: "15:25", subject: "Основы лингв. и комм. культуры", type: "Л", room: "5-5", parity: "both", subgroup: 0 },
+                { id: "sd_4_2", time: "15:45", end: "17:10", subject: "Основы российской государственности", type: "Л", room: "5-5", parity: "both", subgroup: 0 }
+            ],
+            5: [
+                { id: "sd_5_1", time: "10:15", end: "11:40", subject: "Математический анализ", type: "Пр", room: "8-504", parity: "both", subgroup: 0 },
+                { id: "sd_5_2", time: "12:00", end: "13:25", subject: "Инженерная графика", type: "Л", room: "5-5", parity: "both", subgroup: 0 },
+                { id: "sd_5_3", time: "14:00", end: "15:25", subject: "История России", type: "Пр", room: "3-302", parity: "both", subgroup: 0 },
+                { id: "sd_5_4", time: "15:45", end: "17:10", subject: "Физическая культура", type: "Пр", room: "Спорткомплекс", parity: "both", subgroup: 0 }
+            ],
+            6: [
+                { id: "sd_6_1", time: "08:30", end: "09:55", subject: "Основы российской государственности", type: "Пр", room: "3-302", parity: "both", subgroup: 0 },
+                { id: "sd_6_2", time: "10:15", end: "11:40", subject: "История России", type: "Л", room: "5-5", parity: "both", subgroup: 0 }
+            ]
+        }
+    }
+};
+
+const DAY_NAMES_SHORT = ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"];
+const DAY_NAMES_FULL = ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+
+/* Календарь учебного года. Поменяйте даты здесь — больше нигде править не нужно. */
+const ACADEMIC = {
+    start: new Date(2026, 7, 31, 0, 0, 0),   // 31 августа 2026 (понедельник)
+    end: new Date(2026, 11, 30, 23, 59, 59), // учёба до 30 декабря 2026 включительно
+    maxWeek: 18
+};
+
+/* ==========================================================================
+   3. СОСТОЯНИЕ И ХРАНИЛИЩЕ
+   ========================================================================== */
+const STORAGE_KEY = "nstu_state_v8";
+
+function defaultState() {
+    const day = new Date().getDay();
+    return {
+        user: null,
+        theme: "light",
+        selectedDayIndex: day === 0 ? 1 : day,
+        scheduleWeekOffset: 0,
+        draftDifficulty: "medium",
+        feedbackFilter: "all",
+        feedbackRating: 5,
+        tasks: [],
+        customLessons: [],
+        hiddenLessonIds: [],
+        feedbacks: [],
+        notifiedMilestones: {}
+    };
+}
+
+let state = defaultState();
+let storageBroken = false;
+
+function safeParse(raw, fallback) {
+    if (!raw) return fallback;
+    try { return JSON.parse(raw); } catch (e) { return fallback; }
+}
+
+function loadState() {
+    let saved = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { storageBroken = true; }
+
+    if (saved) {
+        const parsed = safeParse(saved, null);
+        if (parsed && typeof parsed === "object") {
+            state = Object.assign(defaultState(), parsed);
+        }
+    } else {
+        // Однократная миграция со старого формата v7 (отдельные ключи)
+        try {
+            const legacyUser = safeParse(localStorage.getItem("nstu_user_v7"), null);
+            if (legacyUser) {
+                state.user = legacyUser;
+                state.theme = localStorage.getItem("nstu_theme_v7") || state.theme;
+                state.tasks = safeParse(localStorage.getItem("nstu_tasks_v7"), []) || [];
+                state.customLessons = safeParse(localStorage.getItem("nstu_custom_v7"), []) || [];
+                state.hiddenLessonIds = safeParse(localStorage.getItem("nstu_hidden_v7"), []) || [];
+                state.feedbacks = safeParse(localStorage.getItem("nstu_fb_v7"), []) || [];
+                state.notifiedMilestones = safeParse(localStorage.getItem("nstu_notif_v7"), {}) || {};
+            }
+        } catch (e) {}
+    }
+
+    normalizeState();
+}
+
+function normalizeState() {
+    if (!Array.isArray(state.tasks)) state.tasks = [];
+    if (!Array.isArray(state.customLessons)) state.customLessons = [];
+    if (!Array.isArray(state.hiddenLessonIds)) state.hiddenLessonIds = [];
+    if (!Array.isArray(state.feedbacks)) state.feedbacks = [];
+    if (!state.notifiedMilestones || typeof state.notifiedMilestones !== "object") state.notifiedMilestones = {};
+
+    // Никаких фейковых отзывов: книга отзывов должна содержать только настоящие записи.
+    // При отсутствии сервера отзывы хранятся только в localStorage (localStorage этого устройства).
+
+    const day = new Date().getDay();
+    state.selectedDayIndex = Number(state.selectedDayIndex) || (day === 0 ? 1 : day);
+    if (state.selectedDayIndex < 1 || state.selectedDayIndex > 6) {
+        state.selectedDayIndex = day === 0 ? 1 : day;
+    }
+    if (state.theme !== "dark") state.theme = "light";
+    if (!["easy", "medium", "hard"].includes(state.draftDifficulty)) state.draftDifficulty = "medium";
+    if (state.feedbackRating == null) state.feedbackRating = 5;
+    if (state.scheduleWeekOffset == null) state.scheduleWeekOffset = 0;
+}
+
+function saveState() {
+    state.lastUpdated = Date.now();
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        if (!storageBroken) {
+            storageBroken = true;
+            showToast("⚠️ Не удалось сохранить данные: хранилище браузера недоступно или переполнено.", "error");
+        }
+    }
+    scheduleServerSync();
+}
+
+// Загрузка групп при выборе факультета (Экран регистрации и Редактирование)
+function updateGroupSelect(facId, grpId) {
+    const facSelect = document.getElementById(facId);
+    const grpSelect = document.getElementById(grpId);
+    const facVal = facSelect.value;
+    const groups = FACULTY_GROUPS[facVal] || [];
+
+    grpSelect.innerHTML = groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
+
+    const wrapper = document.getElementById(grpId + "-wrapper");
+    if (wrapper) wrapper.style.display = groups.length ? "block" : "none";
+}
+
+/* ==========================================================================
+   4. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+   ========================================================================== */
+function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, ch => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+    ));
+}
+
+function plural(n, one, few, many) {
+    const abs = Math.abs(n) % 100;
+    const last = abs % 10;
+    if (abs > 10 && abs < 20) return many;
+    if (last > 1 && last < 5) return few;
+    if (last === 1) return one;
+    return many;
+}
+
+// Локальная дата в формате YYYY-MM-DD (без сдвига часового пояса)
+function toLocalISODate(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function addDays(date, days) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+}
+
+function timeToMinutes(tStr) {
+    const parts = String(tStr || "0:0").split(":");
+    return Number(parts[0]) * 60 + Number(parts[1] || 0);
+}
+
+function formatDuration(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0 && m > 0) return `${h} ч ${m} мин`;
+    if (h > 0) return `${h} ч`;
+    return `${m} мин`;
+}
+
+function formatDateShort(ds) {
+    if (!ds) return "";
+    const parts = String(ds).split("-");
+    if (parts.length !== 3) return ds;
+    return `${parts[2]}.${parts[1]}`;
+}
+
+/* ==========================================================================
+   5. НЕДЕЛИ, ДЕДЛАЙНЫ И СТАТУСЫ
+   ========================================================================== */
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function getAcademicWeekInfo(offsetWeeks = 0) {
+    const now = new Date();
+    let baseWeek = Math.floor((now.getTime() - ACADEMIC.start.getTime()) / WEEK_MS) + 1;
+    if (!Number.isFinite(baseWeek) || baseWeek < 1) baseWeek = 1;
+
+    const currentWeekNum = Math.min(baseWeek, ACADEMIC.maxWeek);
+    const weekNum = Math.max(1, Math.min(ACADEMIC.maxWeek, currentWeekNum + offsetWeeks));
+    const isEven = weekNum % 2 === 0;
+
+    const mondayDate = new Date(ACADEMIC.start);
+    mondayDate.setDate(ACADEMIC.start.getDate() + (weekNum - 1) * 7);
+
+    const saturdayDate = new Date(mondayDate);
+    saturdayDate.setDate(mondayDate.getDate() + 5);
+    const effectiveEndDate = saturdayDate > ACADEMIC.end ? new Date(ACADEMIC.end) : saturdayDate;
+
+    const fmtRange = d => d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
+
+    return {
+        weekNumber: weekNum,
+        currentWeekNumber: currentWeekNum,
+        mondayDate,
+        parity: isEven ? "even" : "odd",
+        labelShort: `${weekNum} нед. • ${isEven ? "Чётная" : "Нечётная"}`,
+        labelLong: `${isEven ? "Чётная" : "Нечётная"} неделя • ${fmtRange(mondayDate)} – ${fmtRange(effectiveEndDate)}`,
+        isAfterSemester: now > ACADEMIC.end
+    };
+}
+
+function getDaysUntilDeadline(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const parts = String(dateStr || "").split("-").map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return 9999;
+    const target = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0);
+    return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function evaluateTaskUrgency(task) {
+    const diffDays = getDaysUntilDeadline(task.deadline);
+    const diff = task.difficulty || "easy";
+
+    let milestones = [2, 1, 0];
+    let scheduleHint = "Напомним за 2 и 1 дн.";
+    if (diff === "medium") {
+        milestones = [7, 3, 1, 0];
+        scheduleHint = "Напомним за 7, 3 и 1 дн.";
+    } else if (diff === "hard") {
+        milestones = [14, 7, 3, 1, 0];
+        scheduleHint = "Напомним за 14, 7, 3 и 1 дн.";
+    }
+
+    let status = "normal";
+    let statusLabel = "В планах";
+
+    if (diff === "easy") {
+        if (diffDays <= 2) {
+            status = "danger";
+            statusLabel = diffDays < 0 ? "Просрочено!" : (diffDays === 0 ? "Сдача сегодня!" : `Горят сроки (${diffDays} дн.)`);
+        }
+    } else if (diff === "medium") {
+        if (diffDays <= 2) {
+            status = "danger";
+            statusLabel = diffDays < 0 ? "Просрочено!" : (diffDays === 0 ? "Сдача сегодня!" : `Красный свет (${diffDays} дн.)`);
+        } else if (diffDays <= 7) {
+            status = "warning";
+            statusLabel = `Контроль: осталось ${diffDays} дн.`;
+        }
+    } else if (diff === "hard") {
+        if (diffDays <= 3) {
+            status = "danger";
+            statusLabel = diffDays < 0 ? "Просрочено!" : (diffDays === 0 ? "Сдача сегодня!" : `Критично (${diffDays} дн.)`);
+        } else if (diffDays <= 14) {
+            status = "warning";
+            statusLabel = `Этап проекта (${diffDays} дн.)`;
+        }
+    }
+
+    return {
+        diffDays,
+        status,
+        statusLabel,
+        milestones,
+        scheduleHint,
+        isMilestoneToday: milestones.includes(diffDays)
+    };
+}
+
+/* ==========================================================================
+   6. РАСПИСАНИЕ И НАГРУЗКА
+   ========================================================================== */
+function getLessonsForDay(dayIndex, targetParity) {
+    if (!state.user) return [];
+    const groupData = SCHEDULE_DB[state.user.group] || SCHEDULE_DB["ЦТК-126"];
+    const baseLessons = (groupData.days[dayIndex] || []).slice();
+    const customForDay = state.customLessons.filter(c => Number(c.day) === Number(dayIndex));
+    const combined = [...baseLessons, ...customForDay];
+    const userSub = Number(state.user.subgroup || 0);
+
+    return combined
+        .filter(item => !state.hiddenLessonIds.includes(item.id))
+        .filter(item => {
+            if (targetParity === "all") return true;
+            return item.parity === "both" || item.parity === targetParity;
+        })
+        .filter(item => {
+            if (userSub === 0 || !item.subgroup || Number(item.subgroup) === 0) return true;
+            return Number(item.subgroup) === userSub;
+        })
+        .sort((a, b) => {
+            const byTime = String(a.time).localeCompare(String(b.time));
+            return byTime !== 0 ? byTime : String(a.subject).localeCompare(String(b.subject));
+        });
+}
+
+function getAllSubjectsForUser() {
+    if (!state.user) return ["Общее / Личное"];
+    const groupData = SCHEDULE_DB[state.user.group] || SCHEDULE_DB["ЦТК-126"];
+    const set = new Set();
+    Object.values(groupData.days).forEach(arr => arr.forEach(l => set.add(l.subject)));
+    state.customLessons.forEach(c => set.add(c.subject));
+    return ["Общее / Личное", ...Array.from(set)];
+}
+
+function getDayWorkloadLevel(dayIndex, parity, precomputedLessons = null) {
+    const lessons = precomputedLessons || getLessonsForDay(dayIndex, parity);
+    const lessonsCount = lessons.length;
+    let relatedTasksCount = 0;
+    if (lessonsCount > 0 && state.tasks.length > 0) {
+        const daySubjects = new Set(lessons.map(l => l.subject));
+        for (let i = 0; i < state.tasks.length; i++) {
+            const t = state.tasks[i];
+            if (!t.done && daySubjects.has(t.subject)) relatedTasksCount++;
+        }
+    }
+    const score = lessonsCount + relatedTasksCount * 0.8;
+    const pairWord = plural(lessonsCount, "пара", "пары", "пар");
+
+    if (score <= 2.2) return { color: "#2D5A3C", label: "🟢 Низкая", sub: `${lessonsCount} ${pairWord} • Свободный темп` };
+    if (score <= 3.8) return { color: "#FF9F43", label: "🟠 Средняя", sub: `${lessonsCount} ${pairWord} • Обычный ритм` };
+    return { color: "#FF6B6B", label: "🔴 Высокая", sub: `${lessonsCount} ${pairWord} • Плотный день` };
+}
+
+/* ==========================================================================
+   7. ОТРИСОВКА ИНТЕРФЕЙСА
+   ========================================================================== */
+function renderHeaderAndWeekStrip() {
+    if (!state.user) return;
+    const groupInfo = SCHEDULE_DB[state.user.group] || SCHEDULE_DB["ЦТК-126"];
+    const subText = Number(state.user.subgroup) > 0 ? `${state.user.subgroup} подгр.` : "Без подгр.";
+
+    document.getElementById("header-greeting").textContent = `Привет, ${state.user.name}!`;
+    document.getElementById("header-group-badge").textContent = `${state.user.faculty || groupInfo.faculty} • ${state.user.group} (${subText})`;
+
+    const now = new Date();
+    document.getElementById("header-date-str").textContent = now.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+
+    const weekInfo = getAcademicWeekInfo(0);
+    document.getElementById("auto-week-pill").textContent = `📅 ${weekInfo.labelShort}`;
+
+    const strip = document.getElementById("week-strip");
+    strip.innerHTML = "";
+
+    for (let d = 1; d <= 6; d++) {
+        const dDate = new Date(weekInfo.mondayDate);
+        dDate.setDate(weekInfo.mondayDate.getDate() + (d - 1));
+        const load = getDayWorkloadLevel(d, weekInfo.parity);
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "day-btn" + (state.selectedDayIndex === d ? " active" : "");
+        btn.setAttribute("aria-label", `${DAY_NAMES_FULL[d]}, ${dDate.getDate()} число`);
+        btn.setAttribute("aria-pressed", state.selectedDayIndex === d ? "true" : "false");
+        btn.innerHTML = `<div class="d-name">${DAY_NAMES_SHORT[d]}</div><div class="d-num">${dDate.getDate()}</div><div class="load-bar" style="background: ${load.color};"></div>`;
+        btn.addEventListener("click", () => {
+            state.selectedDayIndex = d;
+            renderAll();
+        });
+        strip.appendChild(btn);
+    }
+}
+
+function renderNowCardAndMentor() {
+    const bannerBox = document.getElementById("urgent-banner-container");
+    const mentorBox = document.getElementById("mentor-container");
+    const activeTasks = state.tasks.filter(t => !t.done).map(t => ({ ...t, eval: evaluateTaskUrgency(t) }));
+    const dangerTasks = activeTasks.filter(t => t.eval.status === "danger");
+
+    if (dangerTasks.length > 0) {
+        const names = dangerTasks.slice(0, 2).map(t => `«${escapeHtml(t.title)}»`).join(", ");
+        bannerBox.innerHTML = `
+            <div class="urgent-banner">
+                <h4>🔥 Внимание: Горят сроки! (${dangerTasks.length})</h4>
+                <p>Срочные задачи на красном контроле: <b>${names}</b>${dangerTasks.length > 2 ? " и др." : ""}. Не откладывайте на последний вечер!</p>
+            </div>
+        `;
+    } else {
+        bannerBox.innerHTML = "";
+    }
+
+    if (activeTasks.length === 0) {
+        mentorBox.innerHTML = `<div class="mentor-card"><div class="mentor-header">🧠 Умный Наставник</div><div class="mentor-body">Все текущие задачи закрыты! Добавьте сюда даты будущих РГЗ заранее.</div></div>`;
+    } else {
+        let lightestDay = 1, minLessons = 99;
+        const currentParity = getAcademicWeekInfo(0).parity;
+        for (let d = 1; d <= 6; d++) {
+            const count = getLessonsForDay(d, currentParity).length;
+            if (count < minLessons) { minLessons = count; lightestDay = d; }
+        }
+        const hardTasks = activeTasks.filter(t => t.difficulty === "hard");
+        const tips = [];
+        if (dangerTasks.length > 0) tips.push(`<b>Приоритет №1:</b> начните сегодня с <b>«${escapeHtml(dangerTasks[0].title)}»</b>.`);
+        if (hardTasks.length > 0) tips.push(`<b>Трудные проекты:</b> разбейте <b>«${escapeHtml(hardTasks[0].title)}»</b> на части: черновик, решение, проверка.`);
+        if (tips.length === 0) tips.push(`Средние задачи лучше выполнять в <b>${DAY_NAMES_FULL[lightestDay]}</b> (всего ${minLessons} ${plural(minLessons, "пара", "пары", "пар")}).`);
+
+        const taskWord = plural(activeTasks.length, "задача", "задачи", "задач");
+        mentorBox.innerHTML = `<div class="mentor-card"><div class="mentor-header">🧠 Наставник по нагрузке</div><div class="mentor-body">У вас <b>${activeTasks.length} ${taskWord}</b>. Стратегия:<ul class="mentor-tips-list">${tips.map(t => `<li>${t}</li>`).join("")}</ul></div></div>`;
+    }
+
+    // Карточка «Что сейчас»
+    const nowBox = document.getElementById("now-card-container");
+    const now = new Date();
+    const todayDayIdx = now.getDay();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const currentParity = getAcademicWeekInfo(0).parity;
+    const todayLessons = todayDayIdx >= 1 && todayDayIdx <= 6 ? getLessonsForDay(todayDayIdx, currentParity) : [];
+
+    let currentL = null, nextL = null;
+    for (const l of todayLessons) {
+        const sM = timeToMinutes(l.time);
+        const eM = timeToMinutes(l.end || l.time);
+        if (nowMins >= sM && nowMins <= eM) { currentL = { ...l, sM, eM }; break; }
+        if (nowMins < sM && !nextL) nextL = { ...l, sM, eM };
+    }
+
+    if (currentL) {
+        const pct = Math.min(100, Math.max(5, Math.round(((nowMins - currentL.sM) / Math.max(1, currentL.eM - currentL.sM)) * 100)));
+        nowBox.innerHTML = `<div class="now-card"><span class="now-badge">🟢 Идёт пара • Ещё ${currentL.eM - nowMins} мин</span><div style="font-size:16px; font-weight:800;">${escapeHtml(currentL.subject)}</div><div style="font-size:12.5px; color:var(--text-muted); margin-top:3px;">📍 Каб: <b>${escapeHtml(currentL.room)}</b> • ⏰ ${escapeHtml(currentL.time)}–${escapeHtml(currentL.end)}</div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div></div>`;
+    } else if (nextL) {
+        nowBox.innerHTML = `<div class="now-card"><span class="now-badge">⏳ Скоро пара через ${formatDuration(nextL.sM - nowMins)}</span><div style="font-size:15.5px; font-weight:800;">${escapeHtml(nextL.subject)}</div><div style="font-size:12.5px; color:var(--text-muted); margin-top:3px;">📍 ${escapeHtml(nextL.room)} • Начало в <b>${escapeHtml(nextL.time)}</b></div></div>`;
+    } else {
+        const isWeekend = todayDayIdx === 6 || todayDayIdx === 0;
+        const nIdx = isWeekend ? 1 : todayDayIdx + 1;
+        // Понедельник после субботы/воскресенья — это уже следующая учебная неделя
+        const nextParity = isWeekend
+            ? (currentParity === "even" ? "odd" : "even")
+            : currentParity;
+        const nFirst = getLessonsForDay(nIdx, nextParity)[0];
+        const dayWord = isWeekend ? "В понедельник" : "Завтра";
+        nowBox.innerHTML = `<div class="now-card"><span class="now-badge">🌙 Свободное время</span><div style="font-size:15px; font-weight:800;">Учебный день завершён!</div><div style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">${nFirst ? `${dayWord} первая пара к <b>${escapeHtml(nFirst.time)}</b> — ${escapeHtml(nFirst.subject)}` : `${dayWord} пар нет.`}</div></div>`;
+    }
+}
+
+function renderOverviewStatsAndSchedule() {
+    const total = state.tasks.length;
+    const doneCount = state.tasks.filter(t => t.done).length;
+    const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+    document.getElementById("stat-tasks-percent").textContent = `${pct}% (${doneCount}/${total})`;
+    document.getElementById("stat-tasks-bar").style.width = `${pct}%`;
+
+    const currentParity = getAcademicWeekInfo(0).parity;
+    const load = getDayWorkloadLevel(state.selectedDayIndex, currentParity);
+    document.getElementById("stat-day-load").textContent = load.label;
+    document.getElementById("stat-day-load-sub").textContent = load.sub;
+
+    document.getElementById("overview-schedule-title").textContent = `📚 Расписание • ${DAY_NAMES_FULL[state.selectedDayIndex]}`;
+    const lessons = getLessonsForDay(state.selectedDayIndex, currentParity);
+    const listEl = document.getElementById("overview-schedule-list");
+
+    if (lessons.length === 0) {
+        listEl.innerHTML = `<div class="card" style="text-align:center; color:var(--text-muted);">🎉 В этот день пар нет!</div>`;
+    } else {
+        let html = "";
+        for (let i = 0; i < lessons.length; i++) {
+            const l = lessons[i];
+            if (i > 0) {
+                const gap = timeToMinutes(l.time) - timeToMinutes(lessons[i - 1].end || lessons[i - 1].time);
+                if (gap >= 30) html += `<div class="window-gap"><span>⏳ Окно между парами: <b>${formatDuration(gap)}</b></span><span style="font-size:11px;">Можно сделать ДЗ!</span></div>`;
+            }
+            const subTasks = state.tasks.filter(t => !t.done && t.subject === l.subject);
+            const tasksHtml = subTasks.length > 0
+                ? `<div style="margin-top:8px; padding-top:6px; border-top:1px dashed var(--card-border); font-size:12px; color:var(--danger); font-weight:700;">📌 Задачи: ${subTasks.map(t => `«${escapeHtml(t.title)}»`).join(", ")}</div>`
+                : "";
+            html += `<div class="lesson-card"><div class="lesson-time">${escapeHtml(l.time)}<br><span style="font-size:10.5px; opacity:0.8;">${escapeHtml(l.end || "")}</span></div><div class="lesson-info"><div class="lesson-title">${escapeHtml(l.subject)}</div><div class="lesson-meta"><span class="tag">${escapeHtml(l.type)}</span><span>📍 ${escapeHtml(l.room)}</span>${l.subgroup ? `<span class="tag">${Number(l.subgroup)} п.</span>` : ""}</div>${tasksHtml}</div></div>`;
+        }
+        listEl.innerHTML = html;
+    }
+
+    const tasksContainer = document.getElementById("overview-tasks-list");
+    const sortedTasks = sortTasks(state.tasks);
+    tasksContainer.innerHTML = sortedTasks.length === 0
+        ? `<div class="card" style="text-align:center; color:var(--text-muted);">Нет добавленных задач.</div>`
+        : sortedTasks.slice(0, 6).map(renderTaskCardHTML).join("");
+}
+
+function sortTasks(tasks) {
+    return [...tasks].sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        return getDaysUntilDeadline(a.deadline) - getDaysUntilDeadline(b.deadline);
+    });
+}
+
+function renderTaskCardHTML(task) {
+    const info = evaluateTaskUrgency(task);
+    const diffLabels = { easy: "🟢 Лёгкая", medium: "🟠 Средняя", hard: "🔴 Трудная" };
+    const badgeClass = info.status === "danger" ? "badge-danger" : (info.status === "warning" ? "badge-warning" : "badge-normal");
+    return `
+        <div class="task-card status-${info.status} ${task.done ? "done" : ""}">
+            <div class="task-check" role="checkbox" tabindex="0" aria-checked="${task.done ? "true" : "false"}" aria-label="Отметить задачу выполненной" onclick="toggleTaskDone('${escapeHtml(task.id)}')">${task.done ? "✓" : ""}</div>
+            <div class="task-body">
+                <div class="task-title">${escapeHtml(task.title)}</div>
+                <div class="task-meta">
+                    <span class="tag ${badgeClass}">${escapeHtml(info.statusLabel)}</span>
+                    <span class="tag">📚 ${escapeHtml(task.subject)}</span>
+                    <span class="tag">${diffLabels[task.difficulty] || diffLabels.easy}</span>
+                    <span>📅 до ${formatDateShort(task.deadline)}</span>
+                </div>
+            </div>
+            <button class="close-btn" style="width:26px; height:26px; font-size:12px;" onclick="deleteTask('${escapeHtml(task.id)}')" title="Удалить" aria-label="Удалить задачу">🗑</button>
+        </div>
+    `;
+}
+
+function changeScheduleWeek(dir) {
+    const base = getAcademicWeekInfo(0).currentWeekNumber;
+    const next = base + state.scheduleWeekOffset + dir;
+    if (next < 1 || next > ACADEMIC.maxWeek) return;
+    state.scheduleWeekOffset += dir;
+    renderFullScheduleScreen();
+}
+
+function renderFullScheduleScreen() {
+    const container = document.getElementById("full-schedule-container");
+    const weekInfo = getAcademicWeekInfo(state.scheduleWeekOffset);
+
+    const titleText = state.scheduleWeekOffset === 0
+        ? `${weekInfo.weekNumber} неделя (Текущая)`
+        : `${weekInfo.weekNumber} неделя`;
+
+    document.getElementById("schedule-week-title").textContent = titleText;
+    document.getElementById("schedule-week-parity").textContent = weekInfo.labelLong;
+
+    let html = "";
+    for (let d = 1; d <= 6; d++) {
+        const dayDate = new Date(weekInfo.mondayDate);
+        dayDate.setDate(weekInfo.mondayDate.getDate() + (d - 1));
+        const dayDateStr = dayDate.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+        const isAfterStudyEnd = dayDate > ACADEMIC.end;
+
+        const lessons = isAfterStudyEnd ? [] : getLessonsForDay(d, weekInfo.parity);
+        const load = isAfterStudyEnd
+            ? { color: "#2D5A3C", label: "🟢 Каникулы", sub: "Учёба завершена" }
+            : getDayWorkloadLevel(d, weekInfo.parity, lessons);
+
+        html += `<div class="section-title" style="margin-top: 14px;"><span>${DAY_NAMES_FULL[d]}, ${dayDateStr}</span><span style="font-size: 12px; color: var(--text-muted);">${load.label}</span></div>`;
+        if (isAfterStudyEnd) {
+            html += `<div class="card" style="padding: 11px 14px; color: var(--text-muted); font-size: 13px;">🎉 Каникулы (учёба до 30 декабря включительно)</div>`;
+        } else if (lessons.length === 0) {
+            html += `<div class="card" style="padding: 11px 14px; color: var(--text-muted); font-size: 13px;">Занятий нет</div>`;
+        } else {
+            for (let i = 0; i < lessons.length; i++) {
+                const l = lessons[i];
+                if (i > 0) {
+                    const gap = timeToMinutes(l.time) - timeToMinutes(lessons[i - 1].end || lessons[i - 1].time);
+                    if (gap >= 30) html += `<div class="window-gap"><span>⏳ Окно: <b>${formatDuration(gap)}</b></span><span>Свободно</span></div>`;
+                }
+                html += `<div class="lesson-card"><div class="lesson-time">${escapeHtml(l.time)}<br><span style="font-size:10px; opacity:0.8;">${escapeHtml(l.end || "")}</span></div><div class="lesson-info"><div class="lesson-title">${escapeHtml(l.subject)}</div><div class="lesson-meta"><span class="tag">${escapeHtml(l.type)}</span><span>📍 ${escapeHtml(l.room)}</span>${l.subgroup ? `<span class="tag">${Number(l.subgroup)} п.</span>` : ""}</div></div></div>`;
+            }
+        }
+    }
+    container.innerHTML = html;
+}
+
+function renderAllTasksScreen() {
+    const total = state.tasks.length;
+    const doneCount = state.tasks.filter(t => t.done).length;
+    const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+
+    document.getElementById("tasks-screen-percent-text").textContent = `${pct}% (${doneCount}/${total})`;
+    document.getElementById("tasks-screen-bar").style.width = `${pct}%`;
+
+    const container = document.getElementById("all-tasks-container");
+    const sorted = sortTasks(state.tasks);
+    container.innerHTML = sorted.length === 0
+        ? `<div class="card" style="text-align:center; color:var(--text-muted);">Список задач пуст. Добавьте задачу кнопкой «+»!</div>`
+        : sorted.map(renderTaskCardHTML).join("");
+}
+
+function renderProfile() {
+    if (!state.user) return;
+    document.getElementById("profile-avatar").textContent = (state.user.name || "С")[0].toUpperCase();
+    document.getElementById("profile-name").textContent = state.user.name;
+    const subLabel = Number(state.user.subgroup) > 0 ? `${state.user.subgroup} подгруппа` : "Без подгруппы";
+    document.getElementById("profile-group-info").textContent = `${state.user.faculty} • ${state.user.group} • ${subLabel}`;
+}
+
+async function renderFeedbackList() {
+    const fbContainer = document.getElementById("feedback-list-container");
+
+    // Пытаемся подгрузить отзывы с общего сервера (если API настроено и доступно).
+    // Если сервера нет — работаем только с локальными отзывами из этого браузера.
+    let serverFeedbacks = [];
+    try {
+        const res = await fetch(`${API_BASE}/feedback`, { headers: { Accept: "application/json" } });
+        if (res.ok) {
+            const data = await res.json();
+            serverFeedbacks = Array.isArray(data) ? data : (data.feedbacks || []);
+        }
+    } catch (e) {
+        // Сервер недоступен — остаёмся на локальных отзывах
+    }
+
+    // Локальные отзывы (из этого браузера)
+    const localFeedbacks = state.feedbacks || [];
+
+    // Объединяем серверные и локальные, убирая явные дубли по id+тексту
+    const seen = new Set();
+    const all = [];
+    for (const item of [...serverFeedbacks, ...localFeedbacks]) {
+        const key = String(item.id || "") + "|" + String(item.text || "").slice(0, 40);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        all.push(item);
+    }
+
+    // Сначала самые новые (по createdAt, иначе — по числовому id)
+    const timeOf = item => Number(item.createdAt) || Number(item.id) || 0;
+    const filtered = all
+        .filter(item => state.feedbackFilter === "all" || item.type === state.feedbackFilter)
+        .sort((a, b) => timeOf(b) - timeOf(a));
+
+    if (filtered.length === 0) {
+        fbContainer.innerHTML = `<div style="font-size:12.5px; color:var(--text-muted); text-align:center; padding: 10px;">Записей в этой категории пока нет.</div>`;
+        return;
+    }
+
+    fbContainer.innerHTML = filtered.map(item => {
+        const starsCount = Math.max(0, Math.min(5, Number(item.rating) || 5));
+        const starsHtml = "★".repeat(starsCount) + "☆".repeat(5 - starsCount);
+        const source = item.server ? " • общая база" : "";
+        return `
+        <div style="background: var(--bg-elevated); border-radius: 14px; padding: 11px 13px; margin-bottom: 8px; font-size: 13px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px; gap: 8px;">
+                <span class="tag ${item.type === 'bug' ? 'badge-danger' : 'badge-normal'}">${item.type === 'bug' ? '🐛 Ошибка / Баг' : '💡 Предложение'}</span>
+                <span style="font-size:13px; color:#FF9F43; letter-spacing:1px;" aria-label="Оценка ${starsCount} из 5">${starsHtml}</span>
+            </div>
+            <div style="line-height:1.4; margin-bottom: 4px; overflow-wrap: anywhere;">${escapeHtml(item.text)}</div>
+            <div style="font-size:11px; color:var(--text-muted); text-align:right;">${escapeHtml(item.date)}${source}</div>
+        </div>
+        `;
+    }).join("");
+}
+
+function renderProfileAndFeedback() {
+    renderProfile();
+    renderFeedbackList();
+}
+
+function getActiveScreenName() {
+    const activeEl = document.querySelector(".screen.active");
+    return activeEl ? activeEl.id.replace("screen-", "") : "overview";
+}
+
+function renderActiveScreenOnly(screenName) {
+    if (screenName === "overview") {
+        renderNowCardAndMentor();
+        renderOverviewStatsAndSchedule();
+    } else if (screenName === "schedule") {
+        renderFullScheduleScreen();
+    } else if (screenName === "tasks") {
+        renderAllTasksScreen();
+    } else if (screenName === "profile") {
+        renderProfileAndFeedback();
+    }
+}
+
+function renderAll() {
+    document.body.classList.toggle("dark-theme", state.theme === "dark");
+    const metaLight = document.getElementById("meta-theme-color");
+    if (metaLight) metaLight.setAttribute("content", state.theme === "dark" ? "#121214" : "#F9F8F6");
+
+    if (!state.user) {
+        document.getElementById("welcome-modal").classList.add("open");
+        return;
+    }
+    document.getElementById("welcome-modal").classList.remove("open");
+
+    renderHeaderAndWeekStrip();
+    renderActiveScreenOnly(getActiveScreenName());
+}
+
+/* ==========================================================================
+   8. ДЕЙСТВИЯ ПОЛЬЗОВАТЕЛЯ
+   ========================================================================== */
+function completeRegistration() {
+    const name = document.getElementById("reg-name").value.trim() || "Студент";
+    const fac = document.getElementById("reg-faculty").value;
+    const group = document.getElementById("reg-group").value;
+    const subgroup = Number(document.getElementById("reg-subgroup").value);
+
+    if (!fac || !group) { showToast("⚠️ Пожалуйста, выберите факультет и группу!", "warn"); return; }
+
+    state.user = { name, faculty: fac, group, subgroup };
+
+    if (state.tasks.length === 0) {
+        const subjects = getAllSubjectsForUser().filter(s => s !== "Общее / Личное");
+        const s1 = subjects[0] || "Общее / Личное";
+        const s2 = subjects[1] || s1;
+        state.tasks = [
+            { id: "t_demo_1", title: "Подготовить отчёт по лабораторной", subject: s1, deadline: toLocalISODate(addDays(new Date(), 1)), difficulty: "easy", done: false },
+            { id: "t_demo_2", title: "Выполнить РГЗ (Часть 1)", subject: s2, deadline: toLocalISODate(addDays(new Date(), 7)), difficulty: "hard", done: false }
+        ];
+    }
+
+    saveState();
+    renderAll();
+    startDeadlineMonitor();
+
+    if ("Notification" in window && Notification.permission === "default") {
+        try {
+            Notification.requestPermission().then(p => { if (p === "granted") ensurePushSubscription(); }).catch(() => {});
+        } catch (e) {}
+    } else if ("Notification" in window && Notification.permission === "granted") {
+        ensurePushSubscription();
+    }
+    setTimeout(() => checkAndFireDeadlineNotifications(), 600);
+}
+
+function switchScreen(screenName, btnEl) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById("screen-" + screenName).classList.add("active");
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+
+    const fab = document.getElementById("main-fab");
+    fab.style.display = screenName === "profile" ? "none" : "flex";
+
+    renderActiveScreenOnly(screenName);
+}
+
+function toggleTheme() {
+    state.theme = state.theme === "light" ? "dark" : "light";
+    saveState();
+    renderAll();
+}
+
+/* Модалка задачи */
+function openTaskModal() {
+    const subjSelect = document.getElementById("task-subject-input");
+    subjSelect.innerHTML = getAllSubjectsForUser().map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+    document.getElementById("task-date-input").value = toLocalISODate(addDays(new Date(), 1));
+    document.getElementById("task-title-input").value = "";
+    selectDraftDifficulty("medium");
+    document.getElementById("task-modal").classList.add("open");
+}
+
+function selectDraftDifficulty(diff) {
+    state.draftDifficulty = diff;
+    ["easy", "medium", "hard"].forEach(d => {
+        const el = document.getElementById("diff-" + d);
+        if (el) {
+            el.classList.toggle("active", d === diff);
+            el.setAttribute("aria-pressed", d === diff ? "true" : "false");
+        }
+    });
+}
+
+function saveNewTask() {
+    const title = document.getElementById("task-title-input").value.trim();
+    const subject = document.getElementById("task-subject-input").value;
+    const deadline = document.getElementById("task-date-input").value;
+
+    if (!title || !deadline) { showToast("⚠️ Укажите название задачи и дату дедлайна!", "warn"); return; }
+
+    state.tasks.push({
+        id: "task_" + Date.now(),
+        title: title.slice(0, 120),
+        subject,
+        deadline,
+        difficulty: state.draftDifficulty,
+        done: false
+    });
+    saveState();
+    closeModal("task-modal");
+    renderAll();
+    checkAndFireDeadlineNotifications();
+}
+
+function toggleTaskDone(taskId) {
+    const t = state.tasks.find(x => x.id === taskId);
+    if (!t) return;
+    t.done = !t.done;
+    saveState();
+    renderAll();
+}
+
+function deleteTask(taskId) {
+    if (!confirm("Удалить эту задачу?")) return;
+    state.tasks = state.tasks.filter(x => x.id !== taskId);
+    saveState();
+    renderAll();
+    showToast("🗑 Задача удалена.", "success");
+}
+
+/* Модалка редактирования профиля */
+function openProfileEditModal() {
+    if (!state.user) return;
+    document.getElementById("edit-name").value = state.user.name;
+    document.getElementById("edit-faculty").value = state.user.faculty || "МТФ";
+    updateGroupSelect("edit-faculty", "edit-group");
+    document.getElementById("edit-group").value = state.user.group;
+    document.getElementById("edit-subgroup").value = String(state.user.subgroup || 0);
+    document.getElementById("profile-edit-modal").classList.add("open");
+}
+
+function saveProfileEdit() {
+    const name = document.getElementById("edit-name").value.trim() || "Студент";
+    const fac = document.getElementById("edit-faculty").value;
+    const group = document.getElementById("edit-group").value;
+    const subgroup = Number(document.getElementById("edit-subgroup").value);
+
+    if (!fac || !group) return;
+    state.user = { name, faculty: fac, group, subgroup };
+    saveState();
+    closeModal("profile-edit-modal");
+    renderAll();
+    showToast("✅ Настройки профиля сохранены!", "success");
+}
+
+/* Модалка «О приложении» и «Отзывы» */
+function openAboutModal() {
+    document.getElementById("about-modal").classList.add("open");
+}
+
+function openFeedbackModal() {
+    setFeedbackRating(state.feedbackRating || 5);
+    if (!["all", "bug", "idea"].includes(state.feedbackFilter)) state.feedbackFilter = "all";
+    document.querySelectorAll("#feedback-filter-tabs .pill-tab").forEach(b => {
+        b.classList.toggle("active", b.dataset.filter === state.feedbackFilter);
+    });
+    renderFeedbackList();
+    document.getElementById("feedback-modal").classList.add("open");
+}
+
+function setFeedbackRating(rating) {
+    state.feedbackRating = rating;
+    document.querySelectorAll("#fb-star-rating .star-btn").forEach((star, idx) => {
+        star.classList.toggle("active", idx < rating);
+        star.setAttribute("aria-pressed", idx < rating ? "true" : "false");
+    });
+}
+
+/* Модалка настройки расписания */
+function openScheduleEditorModal() {
+    renderSubjectCheckboxes();
+    document.getElementById("schedule-editor-modal").classList.add("open");
+}
+
+function renderSubjectCheckboxes() {
+    if (!state.user) return;
+    const groupData = SCHEDULE_DB[state.user.group] || SCHEDULE_DB["ЦТК-126"];
+    const container = document.getElementById("subject-toggle-list");
+    const allBase = [];
+
+    Object.keys(groupData.days).forEach(d => {
+        groupData.days[d].forEach(l => {
+            allBase.push({ ...l, dayName: DAY_NAMES_SHORT[d], isCustom: false });
+        });
+    });
+    state.customLessons.forEach(c => {
+        allBase.push({ ...c, dayName: DAY_NAMES_SHORT[c.day] || "", isCustom: true });
+    });
+
+    if (allBase.length === 0) {
+        container.innerHTML = `<div style="color:var(--text-muted); font-size:13px; text-align:center;">Базовых предметов нет.</div>`;
+        return;
+    }
+
+    container.innerHTML = allBase.map(item => {
+        const isHidden = state.hiddenLessonIds.includes(item.id);
+        const suffix = item.isCustom
+            ? `<button class="icon-btn" title="Удалить свою пару" aria-label="Удалить свою пару" onclick="deleteCustomLesson('${escapeHtml(item.id)}')">🗑</button>`
+            : "";
+        return `
+            <div class="subject-toggle-item">
+                <div class="subject-toggle-info">
+                    <div class="subject-toggle-title">${escapeHtml(item.subject)}</div>
+                    <div class="subject-toggle-meta">${escapeHtml(item.dayName)} • ${escapeHtml(item.time)} • ${escapeHtml(item.type)}</div>
+                </div>
+                <input type="checkbox" class="checkbox-switch" ${!isHidden ? "checked" : ""} aria-label="Показывать ${escapeHtml(item.subject)}" onchange="toggleLessonVisibility('${escapeHtml(item.id)}', this.checked)">
+                ${suffix}
+            </div>
+        `;
+    }).join("");
+}
+
+function toggleLessonVisibility(lessonId, isChecked) {
+    if (isChecked) {
+        state.hiddenLessonIds = state.hiddenLessonIds.filter(id => id !== lessonId);
+    } else if (!state.hiddenLessonIds.includes(lessonId)) {
+        state.hiddenLessonIds.push(lessonId);
+    }
+    saveState();
+    renderAll();
+}
+
+function deleteCustomLesson(lessonId) {
+    if (!confirm("Удалить эту свою пару из расписания?")) return;
+    state.customLessons = state.customLessons.filter(c => c.id !== lessonId);
+    state.hiddenLessonIds = state.hiddenLessonIds.filter(id => id !== lessonId);
+    saveState();
+    renderSubjectCheckboxes();
+    renderAll();
+    showToast("🗑 Своя пара удалена.", "success");
+}
+
+function restoreAllHiddenLessons() {
+    state.hiddenLessonIds = [];
+    saveState();
+    renderSubjectCheckboxes();
+    renderAll();
+    showToast("✅ Все скрытые дисциплины снова видны!", "success");
+}
+
+function addCustomLesson() {
+    const subject = document.getElementById("cust-title").value.trim();
+    const day = Number(document.getElementById("cust-day").value);
+    const time = document.getElementById("cust-time").value;
+    const type = document.getElementById("cust-type").value;
+    const room = document.getElementById("cust-room").value.trim() || "НГТУ";
+    const parity = document.getElementById("cust-parity").value;
+
+    if (!subject) { showToast("⚠️ Введите название дисциплины или секции!", "warn"); return; }
+
+    const duplicate = state.customLessons.some(c =>
+        c.subject.toLowerCase() === subject.toLowerCase() && Number(c.day) === day && c.time === time
+    );
+    if (duplicate) { showToast("⚠️ Такая пара уже добавлена на это время.", "warn"); return; }
+
+    const sM = timeToMinutes(time);
+    const eM = sM + 85;
+    const eH = String(Math.floor(eM / 60)).padStart(2, "0");
+    const eMins = String(eM % 60).padStart(2, "0");
+
+    state.customLessons.push({
+        id: "cust_" + Date.now(),
+        day,
+        time,
+        end: `${eH}:${eMins}`,
+        subject: subject.slice(0, 80),
+        type,
+        room: room.slice(0, 40),
+        parity,
+        subgroup: 0
+    });
+
+    document.getElementById("cust-title").value = "";
+    document.getElementById("cust-room").value = "";
+    saveState();
+    renderAll();
+    closeModal("schedule-editor-modal");
+    showToast(`✅ В расписание добавлено: «${escapeHtml(subject)}»`, "success");
+}
+
+async function submitFeedback() {
+    const text = document.getElementById("fb-text").value.trim();
+    if (!text) { showToast("⚠️ Напишите текст отзыва или описания ошибки!", "warn"); return; }
+
+    const entry = {
+        id: Date.now(),
+        type: document.getElementById("fb-type").value,
+        text: text.slice(0, 1000),
+        rating: state.feedbackRating || 5,
+        date: new Date().toLocaleDateString("ru-RU"),
+        server: false
+    };
+
+    // Сохраняем локально сразу — пользователь должен видеть свой отзыв даже без сервера
+    state.feedbacks.push(entry);
+    saveState();
+    document.getElementById("fb-text").value = "";
+    renderFeedbackList();
+
+    // Пытаемся отправить на общий сервер (если API настроено и доступно)
+    try {
+        const res = await fetch(`${API_BASE}/feedback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(entry)
+        });
+        if (!res.ok) throw new Error("Server returned " + res.status);
+    } catch (e) {
+        showToast("💾 Сервер недоступен — отзыв сохранён только в этом браузере.", "info");
+    }
+
+    showToast("📬 Спасибо! Ваша запись добавлена в Книгу отзывов.", "success");
+}
+
+function setFeedbackFilter(filter, btnEl) {
+    state.feedbackFilter = filter;
+    document.querySelectorAll("#feedback-filter-tabs .pill-tab").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+    renderFeedbackList();
+}
+
+function openInstallModal() { document.getElementById("install-modal").classList.add("open"); }
+
+function switchInstallGuideTab(tab) {
+    document.getElementById("guide-android").style.display = tab === "android" ? "block" : "none";
+    document.getElementById("guide-ios").style.display = tab === "ios" ? "block" : "none";
+    document.getElementById("guide-push").style.display = tab === "push" ? "block" : "none";
+    document.getElementById("tab-btn-android").classList.toggle("active", tab === "android");
+    document.getElementById("tab-btn-ios").classList.toggle("active", tab === "ios");
+    document.getElementById("tab-btn-push").classList.toggle("active", tab === "push");
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+/* ==========================================================================
+   9. УВЕДОМЛЕНИЯ И ФОНОВЫЙ МОНИТОРИНГ
+   ========================================================================== */
+function showToast(htmlContent, variant) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const el = document.createElement("div");
+    el.className = "toast" + (variant ? " toast--" + variant : "");
+    el.innerHTML = htmlContent;
+    container.appendChild(el);
+    setTimeout(() => {
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 300);
+    }, 5200);
+}
+
+async function showSystemNotification(title, bodyText) {
+    showToast(`<b>${escapeHtml(title)}</b><br>${escapeHtml(bodyText)}`, "info");
+
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const opts = {
+        body: bodyText,
+        icon: "./icon-192.png",
+        badge: "./icon-192.png",
+        tag: "nstu-deadline-" + Date.now(),
+        data: { url: "./" }
+    };
+
+    try {
+        let reg = null;
+        if (navigator.serviceWorker) {
+            try { reg = await navigator.serviceWorker.getRegistration(); } catch (e) {}
+        }
+        if (reg && reg.showNotification) {
+            await reg.showNotification(title, opts);
+        } else {
+            new Notification(title, opts);
+        }
+    } catch (e) {
+        try { new Notification(title, { body: bodyText }); } catch (err) {}
+    }
+}
+
+function localDayKey() {
+    return toLocalISODate(new Date());
+}
+
+function pruneMilestones() {
+    const keys = Object.keys(state.notifiedMilestones);
+    if (keys.length < 200) return;
+    const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
+    keys.forEach(k => {
+        if (Number(state.notifiedMilestones[k]) < cutoff) delete state.notifiedMilestones[k];
+    });
+}
+
+async function checkAndFireDeadlineNotifications() {
+    if (!state.user) return;
+    const activeTasks = state.tasks.filter(t => !t.done);
+    if (activeTasks.length === 0) return;
+
+    const todayKey = localDayKey();
+    let fired = 0;
+
+    for (const task of activeTasks) {
+        const info = evaluateTaskUrgency(task);
+        if (!info.isMilestoneToday) continue;
+
+        const milestoneKey = `${task.id}_${info.diffDays}_${todayKey}`;
+        if (state.notifiedMilestones[milestoneKey]) continue;
+        state.notifiedMilestones[milestoneKey] = Date.now();
+
+        const diffTitle = task.difficulty === "hard" ? "🔴 Трудная задача" : (task.difficulty === "medium" ? "🟠 Средняя задача" : "🟢 Лёгкая задача");
+        const timeText = info.diffDays === 0 ? "Сдача уже СЕГОДНЯ!" : (info.diffDays < 0 ? `Просрочено на ${Math.abs(info.diffDays)} дн.!` : `До дедлайна ${info.diffDays} дн.`);
+
+        showSystemNotification(`🔥 Контроль дедлайна • ${diffTitle}`, `«${task.title}» (${task.subject}). ${timeText}`);
+        fired++;
+    }
+
+    if (fired > 0) {
+        pruneMilestones();
+        saveState();
+    }
+}
+
+function requestAndTestNotifications() {
+    if (!("Notification" in window)) {
+        showToast("⚠️ Этот браузер не поддерживает уведомления. На iPhone установите приложение на рабочий стол (iOS 16.4+).", "warn");
+        return;
+    }
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            showSystemNotification("✅ Уведомления включены!", "НГТУ Планнер будет предупреждать вас о важных сроках.");
+            ensurePushSubscription();
+        } else {
+            showToast("⚠️ Разрешение на уведомления отклонено.", "warn");
+        }
+    }).catch(() => {
+        showToast("⚠️ Не удалось запросить разрешение на уведомления.", "warn");
+    });
+}
+
+let deadlineTimer = null;
+function startDeadlineMonitor() {
+    if (deadlineTimer) return;
+    deadlineTimer = setInterval(() => {
+        if (!document.hidden) checkAndFireDeadlineNotifications();
+    }, 60 * 1000);
+}
+
+/* ==========================================================================
+   10. PWA / SERVICE WORKER / WEB PUSH
+   ========================================================================== */
+let pushSubscription = null;
+let serverSyncTimer = null;
+let vapidKeyPromise = null;
+
+function userTimeZone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Novosibirsk"; }
+    catch (e) { return "Asia/Novosibirsk"; }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(base64);
+    const output = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
+    return output;
+}
+
+function getVapidPublicKey() {
+    if (!vapidKeyPromise) {
+        vapidKeyPromise = fetch("./api/config", { headers: { Accept: "application/json" } })
+            .then(r => (r.ok ? r.json() : null))
+            .then(data => (data && data.publicKey) || null)
+            .catch(() => null);
+    }
+    return vapidKeyPromise;
+}
+
+// Подписка на фоновые push-уведомления (работают, даже когда приложение закрыто)
+async function ensurePushSubscription() {
+    if (!state.user) return null;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;
+    if (!("Notification" in window) || Notification.permission !== "granted") return null;
+    if (location.protocol !== "http:" && location.protocol !== "https:") return null;
+
+    try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) return null;
+
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+            const publicKey = await getVapidPublicKey();
+            if (!publicKey) return null;
+            sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
+            });
+        }
+
+        pushSubscription = sub;
+        await fetch("./api/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                subscription: sub.toJSON(),
+                tasks: state.tasks,
+                tz: userTimeZone(),
+                name: state.user ? state.user.name : ""
+            })
+        }).catch(() => {});
+        return sub;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Отправка изменений задач на сервер, чтобы он знал о дедлайнах (с задержкой)
+function scheduleServerSync() {
+    if (!pushSubscription) return;
+    clearTimeout(serverSyncTimer);
+    serverSyncTimer = setTimeout(() => {
+        fetch("./api/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                endpoint: pushSubscription.endpoint,
+                tasks: state.tasks,
+                tz: userTimeZone()
+            })
+        }).then(r => {
+            // Подписку потеряли на сервере (истекла или база почищена) — оформляем заново
+            if (r && r.status === 404) ensurePushSubscription();
+        }).catch(() => {});
+    }, 1500);
+}
+
+function initServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    if (location.protocol !== "http:" && location.protocol !== "https:") return;
+
+    navigator.serviceWorker.register("./sw.js", { scope: "./" }).then(reg => {
+        if (state.user && "Notification" in window && Notification.permission === "granted") {
+            ensurePushSubscription();
+        }
+        reg.addEventListener("updatefound", () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                    showToast("🔄 Доступно обновление приложения. Перезапустите его, чтобы применить.", "info");
+                }
+            });
+        });
+    }).catch(() => {
+        // Без SW сайт всё равно работает, просто без офлайн-режима
+    });
+}
+
+/* ==========================================================================
+   11. ИНИЦИАЛИЗАЦИЯ
+   ========================================================================== */
+window.addEventListener("online", () => {
+    checkAndFireDeadlineNotifications();
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        renderAll();
+        checkAndFireDeadlineNotifications();
+    }
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+    loadState();
+    renderAll();
+    initServiceWorker();
+    if (state.user) {
+        startDeadlineMonitor();
+        if ("Notification" in window && Notification.permission === "granted") {
+            // Обновляем подписку и задачи на сервере при каждом запуске
+            setTimeout(ensurePushSubscription, 900);
+        }
+    }
+    setTimeout(() => checkAndFireDeadlineNotifications(), 1000);
+});
+</script>
+</body>
+</html>
