@@ -6,7 +6,7 @@
  * берётся из кэша и сеть не требуется вовсе.
  */
 
-const CACHE_VERSION = "nstu-v8-3";
+const CACHE_VERSION = "nstu-v9-3";
 const PRECACHE = [
   "./",
   "./index.html",
